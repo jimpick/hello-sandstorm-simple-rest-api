@@ -40,14 +40,8 @@ function handlePowerboxToken(req, resp) {
   })
 }
 
-let keytext = null;
-
 function fetchPosts() {
   return new Promise((resolve, reject) => {
-    if(keytext !== null) {
-      resolve(keytext);
-      return;
-    }
     return fs.promises.readFile('/var/token').then((token) => {
       request({
         proxy: process.env.HTTP_PROXY,
@@ -66,13 +60,12 @@ function fetchPosts() {
         // It would probably still be better to use the expected host here,
         // but just to demo:
         url: 'http://example.com/',
-      }, (err, githubResponse, body) => {
+      }, (err, _, body) => {
         if(err) {
           reject(err);
           return;
         }
-        keytext = body;
-        resolve(keytext)
+        resolve(body)
       })
     })
   })
