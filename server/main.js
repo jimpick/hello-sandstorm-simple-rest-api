@@ -81,9 +81,40 @@ function fetchPosts() {
 function handleFetchPosts(resp) {
     fetchPosts()
       .then((data) => {
-        resp.writeHead(200, {'content-type': 'text/plain'})
-        resp.write(keytext)
-        resp.end()
+        resp.writeHead(200, {'content-type': 'text/html'})
+        let output = `<html>
+          <body>
+            <pre>${data}</pre>
+            <a href="/">Back to Top</a>
+            <script>
+              window.parent.postMessage({'setPath': location.pathname + location.hash}, '*');
+              var getGrainTitleRpcId = 0;
+
+              // Sandstorm will reply via postMessage, so we need to set up a handler:
+              window.addEventListener('message', function(event) {
+                if(event.source !== window.parent) {
+                  // SECURITY: ignore messages not from the parent.
+                  return;
+                }
+                if(event.data.rpcId === getGrainTitleRpcId) {
+                  console.log("The grain's title is: ", event.data.grainTitle);
+                  window.parent.postMessage({'setTitle': event.data.grainTitle + ': Posts'}, '*');
+                }
+              })
+
+              // Now make the request:
+              window.parent.postMessage({
+                getGrainTitle: {},
+                rpcId: getGrainTitleRpcId,
+                // If subscribe is true, sandstorm will push future updates to the
+                // grain's title. If it is false or absent, the app will not be
+                // notified of updates.
+                // subscribe: true,
+              }, '*')
+            </script>
+          </body>
+        </html>`
+        resp.end(output)
       })
       .catch((err) => {
         console.log(err)
